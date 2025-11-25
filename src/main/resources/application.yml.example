@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: motiday-api
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/motiday?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: root
+    password: your_password_here
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
+
+logging:
+  level:
+    org.hibernate.SQL: debug
