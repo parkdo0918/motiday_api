@@ -48,6 +48,11 @@ public class Routine extends BaseTimeEntity {
     @Column(length = 50)
     private String region;
 
+    @Column(name = "max_participants", nullable = false)
+    @Builder.Default
+    private Integer maxParticipants = 30;  // 모든 루틴 30명 제한
+
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
@@ -70,6 +75,11 @@ public class Routine extends BaseTimeEntity {
 
     public boolean isActive() {
         return this.status == RoutineStatus.ACTIVE;
+    }
+
+    public boolean canJoin() {
+        if (!isActive()) return false;
+        return currentParticipants < maxParticipants;  // 30명 미만
     }
 
     // Difficulty에서 값 가져오기
