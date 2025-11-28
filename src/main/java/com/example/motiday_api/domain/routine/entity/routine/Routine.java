@@ -1,4 +1,4 @@
-package com.example.motiday_api.domain.routine.entity;
+package com.example.motiday_api.domain.routine.entity.routine;
 
 import com.example.motiday_api.domain.common.BaseTimeEntity;
 import com.example.motiday_api.domain.user.entity.User;

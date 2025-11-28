@@ -4,6 +4,8 @@ import com.example.motiday_api.domain.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "users",
         uniqueConstraints = {
@@ -41,20 +43,53 @@ public class User extends BaseTimeEntity {
     @Builder.Default
     private Integer motiBalance = 0;
 
+    // Refresh Token 관련 필드 추가
+    @Column(length = 500)
+    private String refreshToken;
+
+    //만료시간
+    @Column(name = "refresh_token_expires_at")
+    private LocalDateTime refreshTokenExpiresAt;
+
     // 비즈니스 메서드
+    //프로필 업데이트
     public void updateProfile(String nickname, String bio) {
         this.nickname = nickname;
         this.bio = bio;
     }
 
+    //모티 추가
     public void addMoti(int amount) {
         this.motiBalance += amount;
     }
 
+    //모티 삭제
     public void deductMoti(int amount) {
         if (this.motiBalance < amount) {
             throw new IllegalStateException("보유 모티가 부족합니다.");
         }
         this.motiBalance -= amount;
+    }
+
+    // Refresh Token 관련 메서드
+
+    // 로그인 시 저장
+    public void updateRefreshToken(String token, LocalDateTime expiresAt) {
+        this.refreshToken = token;
+        this.refreshTokenExpiresAt = expiresAt;
+    }
+
+    // 로그아웃 시 삭제
+    public void clearRefreshToken() {
+        this.refreshToken = null;
+        this.refreshTokenExpiresAt = null;
+    }
+
+    // 유효성 체크
+    public boolean isRefreshTokenValid() {
+        if (this.refreshToken == null || this.refreshTokenExpiresAt == null) {
+            return false;
+        }
+        return LocalDateTime.now().isBefore(this.refreshTokenExpiresAt);
     }
 }

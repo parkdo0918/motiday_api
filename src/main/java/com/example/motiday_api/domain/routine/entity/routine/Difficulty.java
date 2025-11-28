@@ -1,4 +1,4 @@
-package com.example.motiday_api.domain.routine.entity;
+package com.example.motiday_api.domain.routine.entity.routine;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

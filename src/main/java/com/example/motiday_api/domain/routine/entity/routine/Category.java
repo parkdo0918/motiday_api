@@ -1,4 +1,4 @@
-package com.example.motiday_api.domain.routine.entity;
+package com.example.motiday_api.domain.routine.entity.routine;
 
 public enum Category {
     EXERCISE,   // 운동
