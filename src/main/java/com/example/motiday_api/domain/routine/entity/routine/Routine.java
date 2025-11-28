@@ -34,9 +34,6 @@ public class Routine extends BaseTimeEntity {
     @Column(nullable = false, length = 20)
     private Category category;
 
-    @Column(name = "max_participants")
-    private Integer maxParticipants; // NULL이면 무제한
-
     @Column(name = "current_participants", nullable = false)
     @Builder.Default
     private Integer currentParticipants = 0;
@@ -73,12 +70,6 @@ public class Routine extends BaseTimeEntity {
 
     public boolean isActive() {
         return this.status == RoutineStatus.ACTIVE;
-    }
-
-    public boolean canJoin() {
-        if (!isActive()) return false;
-        if (maxParticipants == null) return true;
-        return currentParticipants < maxParticipants;
     }
 
     // Difficulty에서 값 가져오기
