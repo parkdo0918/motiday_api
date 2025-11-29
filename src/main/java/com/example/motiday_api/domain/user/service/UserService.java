@@ -28,6 +28,11 @@ public class UserService {
                 });
     }
 
+    public User getUser(Long
+                                userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    }
     // 닉네임 중복 체크
     public boolean isNicknameAvailable(String nickname) {
         return !userRepository.existsByNickname(nickname);
@@ -35,11 +40,11 @@ public class UserService {
 
     // 프로필 수정
     @Transactional
-    public User updateProfile(Long userId, String nickname, String bio) {
+    public User updateProfile(Long userId, String nickname, String profileImageUrl , String bio) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        user.updateProfile(nickname, bio);
+        user.updateProfile(nickname, profileImageUrl, bio);
         return user;
     }
 
