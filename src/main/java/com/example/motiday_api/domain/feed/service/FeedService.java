@@ -38,6 +38,20 @@ public class FeedService {
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
 
+    // 사용자별 피드 조회 (프로필용)
+    public List<Feed> getUserFeeds(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        return feedRepository.findByUserOrderByCreatedAtDesc(user);
+    }
+
+    // 피드 조회 (피드 상세 조회용, 아직은 필요없음)
+    public Feed getFeed(Long feedId) {
+        return feedRepository.findById(feedId)
+                .orElseThrow(() -> new IllegalArgumentException("피드를 찾을 수 없습니다."));
+    }
+
     // 피드 생성 (인증 업로드)
     @Transactional
     public Feed createFeed(Long userId, Long routineId, String imageUrl,

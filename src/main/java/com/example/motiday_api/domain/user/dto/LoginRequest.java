@@ -13,5 +13,4 @@ import lombok.NoArgsConstructor;
 public class LoginRequest {
     private SocialType socialType;
     private String socialId;
-    private String nickname;
 }

@@ -48,6 +48,7 @@ public class RoutineStatsService {
     // 루틴 통계 갱신
     private void updateRoutineStats(Routine routine) {
         LocalDate today = LocalDate.now();
+        LocalDate yesterday = today.minusDays(1);
 
         // 최근 7일/14일 인증 수 계산
         LocalDateTime sevenDaysAgo = today.minusDays(7).atStartOfDay();
@@ -65,6 +66,17 @@ public class RoutineStatsService {
                 .toList()
                 .size();
 
+        // 어제 인증 수 계산 (추가)
+        LocalDateTime yesterdayStart = yesterday.atStartOfDay();
+        LocalDateTime yesterdayEnd = yesterday.atTime(23, 59, 59);
+
+        int yesterdayCount = feedRepository.findAll().stream()
+                .filter(feed -> feed.getRoutine().getId().equals(routine.getId()))
+                .filter(feed -> feed.getCreatedAt().isAfter(yesterdayStart) &&
+                        feed.getCreatedAt().isBefore(yesterdayEnd))
+                .toList()
+                .size();
+
         // 활성 참여자 수
         int activeCount = participantRepository.countByRoutineAndStatus(
                 routine,
@@ -76,11 +88,11 @@ public class RoutineStatsService {
                 .findByRoutineAndDate(routine, today)
                 .orElseGet(() -> RoutineStats.createToday(routine));
 
-        stats.updateStats(last7DaysCert, last14DaysCert, activeCount);
+        stats.updateStats(last7DaysCert, last14DaysCert, activeCount, yesterdayCount);
         routineStatsRepository.save(stats);
 
         log.info("Routine {} 통계 갱신: 활성 {}명, 7일 {}건, 14일 {}건",
-                routine.getId(), activeCount, last7DaysCert, last14DaysCert);
+                routine.getId(), activeCount,  yesterdayCount, last7DaysCert, last14DaysCert);
     }
 
     // 방 폭파 조건 체크

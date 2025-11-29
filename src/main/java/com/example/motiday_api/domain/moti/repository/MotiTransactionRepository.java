@@ -1,6 +1,7 @@
 package com.example.motiday_api.domain.moti.repository;
 
 import com.example.motiday_api.domain.moti.entity.MotiTransaction;
+import com.example.motiday_api.domain.moti.entity.TransactionType;
 import com.example.motiday_api.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -12,4 +13,7 @@ public interface MotiTransactionRepository extends JpaRepository<MotiTransaction
 
     // 사용자별 거래 내역 (최신순)
     List<MotiTransaction> findByUserOrderByCreatedAtDesc(User user);
+
+    // 타입별 거래 내역 (추가)
+    List<MotiTransaction> findByUserAndTypeOrderByCreatedAtDesc(User user, TransactionType type);
 }

@@ -26,6 +26,12 @@ public class RoutineService {
     private final RoutineParticipantRepository participantRepository;
     private final UserRepository userRepository;
 
+    // 루틴 조회 - 루틴 상세 페이지
+    public Routine getRoutine(Long routineId) {
+        return routineRepository.findById(routineId)
+                .orElseThrow(() -> new IllegalArgumentException("루틴을 찾을 수 없습니다."));
+    }
+
     // 루틴 생성
     @Transactional
     public Routine createRoutine(Long userId, Routine routine) {

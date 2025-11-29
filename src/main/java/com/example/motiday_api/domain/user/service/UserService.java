@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Random;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -14,22 +16,42 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    private String generateRandomNickname() {
+        String[] names = {"열일하는모티", "꾸준한모티", "갓생사는모티", "집중하는모티"};
+
+        Random random = new Random();
+        String name = names[random.nextInt(names.length)];
+        String randomNum = String.format("%04d", random.nextInt(10000));  // 0000~9999
+
+        String nickname = name + randomNum;  // 예: 갓생사는모티1234
+
+        // 중복 체크
+        while (userRepository.existsByNickname(nickname)) {
+            randomNum = String.format("%04d", random.nextInt(10000));
+            nickname = name + randomNum;
+        }
+
+        return nickname;
+    }
+
     // 소셜 로그인 또는 회원가입
     @Transactional
-    public User loginOrRegister(SocialType socialType, String socialId, String nickname) {
-        return userRepository.findBySocialTypeAndSocialId(socialType, socialId)
-                .orElseGet(() -> {
+    public User loginOrRegister(SocialType socialType, String socialId) {
+        return userRepository.findBySocialTypeAndSocialId(socialType, socialId) // 로그인
+                .orElseGet(() -> { // 정보 없으면 회원가입
+
+                    String randomnickname = generateRandomNickname();
+
                     User newUser = User.builder()
                             .socialType(socialType)
                             .socialId(socialId)
-                            .nickname(nickname)
+                            .nickname(randomnickname)
                             .build();
                     return userRepository.save(newUser);
                 });
     }
 
-    public User getUser(Long
-                                userId) {
+    public User getUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
     }

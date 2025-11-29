@@ -40,6 +40,10 @@ public class RoutineStats {
     @Builder.Default
     private Integer dailyCertificationCount = 0;  // 해당 날짜 인증 수
 
+    @Column(name = "yesterday_certification_count", nullable = false)
+    @Builder.Default
+    private Integer yesterdayCertificationCount = 0;  // 어제 인증 수 (추가)
+
     @Column(name = "active_participants", nullable = false)
     @Builder.Default
     private Integer activeParticipants = 0;  // 활성 참여자 수 (ACTIVE 상태)
@@ -72,11 +76,13 @@ public class RoutineStats {
      * @param last7Days 최근 7일 인증 수
      * @param last14Days 최근 14일 인증 수
      * @param activeCount 활성 참여자 수
+     * @param yesterdayCount 어제 인증 수 (추가)
      */
-    public void updateStats(int last7Days, int last14Days, int activeCount) {
+    public void updateStats(int last7Days, int last14Days, int activeCount, int yesterdayCount) {
         this.last7DaysCertCount = last7Days;
         this.last14DaysCertCount = last14Days;
         this.activeParticipants = activeCount;
+        this.yesterdayCertificationCount = yesterdayCount;  // 추가
         this.updatedAt = LocalDateTime.now();
     }
 
