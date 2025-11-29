@@ -246,7 +246,8 @@
 | `date` | DATE | NOT NULL | 통계 날짜 |
 | `daily_certification_count` | INT | DEFAULT 0 | 해당 날짜 인증 수 |
 | `active_participants` | INT | DEFAULT 0 | 활성 참여자 수 |
-| `last_14days_cert_count` | INT | DEFAULT 0 | 최근 14일 인증 수 (캐시) |
+  last_7days_cert_count INT DEFAULT 0  -- 최근 7일 인증 수 (루틴 표시용)
+| `last_14days_cert_count` | INT | DEFAULT 0 | 최근 14일 인증 수 (캐시) | // 방폭파 기능 요소
 | `updated_at` | TIMESTAMP | ON UPDATE CURRENT_TIMESTAMP | 수정 일시 |
 
 **Indexes**
