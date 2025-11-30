@@ -18,6 +18,17 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
     open-in-view: false
 
+# Swagger 설정 추가
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+
 logging:
   level:
     org.hibernate.SQL: debug
