@@ -16,6 +16,10 @@ import com.example.motiday_api.domain.stats.entity.RoutineStats;
 import com.example.motiday_api.domain.stats.repository.RoutineStatsRepository;
 import com.example.motiday_api.domain.user.entity.User;
 import com.example.motiday_api.domain.user.repository.UserRepository;
+import com.example.motiday_api.exception.DuplicateException;
+import com.example.motiday_api.exception.ForbiddenException;
+import com.example.motiday_api.exception.RoutineNotFoundException;
+import com.example.motiday_api.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +45,7 @@ public class FeedService {
     // 사용자별 피드 조회 (프로필용)
     public List<Feed> getUserFeeds(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
         return feedRepository.findByUserOrderByCreatedAtDesc(user);
     }
@@ -57,14 +61,14 @@ public class FeedService {
     public Feed createFeed(Long userId, Long routineId, String imageUrl,
                            String caption, boolean isSharedToRoutine) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
         Routine routine = routineRepository.findById(routineId)
-                .orElseThrow(() -> new IllegalArgumentException("루틴을 찾을 수 없습니다."));
+                .orElseThrow(() -> new RoutineNotFoundException("루틴을 찾을 수 없습니다."));
 
         // 참여 중인지 확인
         RoutineParticipant participant = participantRepository.findByUserAndRoutine(user, routine)
-                .orElseThrow(() -> new IllegalStateException("참여 중인 루틴이 아닙니다."));
+                .orElseThrow(() -> new ForbiddenException("참여 중인 루틴이 아닙니다."));
 
         // 주차 계산 (참여일 기준 rolling 7 days)
         long daysSinceJoined = ChronoUnit.DAYS.between(
@@ -131,7 +135,7 @@ public class FeedService {
     // 활동 게시물 조회 (루틴별)
     public List<Feed> getRoutineFeed(Long routineId) {
         Routine routine = routineRepository.findById(routineId)
-                .orElseThrow(() -> new IllegalArgumentException("루틴을 찾을 수 없습니다."));
+                .orElseThrow(() -> new RoutineNotFoundException("루틴을 찾을 수 없습니다."));
 
         return feedRepository.findByRoutineAndIsSharedToRoutineTrueOrderByCreatedAtDesc(routine);
     }
@@ -140,14 +144,14 @@ public class FeedService {
     @Transactional
     public void likeFeed(Long userId, Long feedId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
         Feed feed = feedRepository.findById(feedId)
                 .orElseThrow(() -> new IllegalArgumentException("피드를 찾을 수 없습니다."));
 
         // 이미 좋아요했는지 확인
         if (likeRepository.existsByFeedAndUser(feed, user)) {
-            throw new IllegalStateException("이미 좋아요한 피드입니다.");
+            throw new DuplicateException("이미 좋아요한 피드입니다.");
         }
 
         // 좋아요 생성
@@ -165,14 +169,14 @@ public class FeedService {
     @Transactional
     public void unlikeFeed(Long userId, Long feedId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
         Feed feed = feedRepository.findById(feedId)
                 .orElseThrow(() -> new IllegalArgumentException("피드를 찾을 수 없습니다."));
 
         // 좋아요 찾기
         Like like = likeRepository.findByFeedAndUser(feed, user)
-                .orElseThrow(() -> new IllegalStateException("좋아요하지 않은 피드입니다."));
+                .orElseThrow(() -> new ForbiddenException("좋아요하지 않은 피드입니다."));
 
         // 좋아요 삭제
         likeRepository.delete(like);
@@ -185,7 +189,7 @@ public class FeedService {
     @Transactional
     public Comment createComment(Long userId, Long feedId, String content) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
         Feed feed = feedRepository.findById(feedId)
                 .orElseThrow(() -> new IllegalArgumentException("피드를 찾을 수 없습니다."));
@@ -209,14 +213,14 @@ public class FeedService {
     @Transactional
     public void deleteComment(Long userId, Long commentId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
         // 작성자 확인
         if (!comment.isOwner(user)) {
-            throw new IllegalStateException("댓글 작성자만 삭제할 수 있습니다.");
+            throw new ForbiddenException("댓글 작성자만 삭제할 수 있습니다.");
         }
 
         Feed feed = comment.getFeed();

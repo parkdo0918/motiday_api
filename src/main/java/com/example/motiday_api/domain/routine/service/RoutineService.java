@@ -9,6 +9,10 @@ import com.example.motiday_api.domain.routine.repository.RoutineParticipantRepos
 import com.example.motiday_api.domain.routine.repository.RoutineRepository;
 import com.example.motiday_api.domain.user.entity.User;
 import com.example.motiday_api.domain.user.repository.UserRepository;
+import com.example.motiday_api.exception.DuplicateException;
+import com.example.motiday_api.exception.ForbiddenException;
+import com.example.motiday_api.exception.RoutineNotFoundException;
+import com.example.motiday_api.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,14 +33,14 @@ public class RoutineService {
     // 루틴 조회 - 루틴 상세 페이지
     public Routine getRoutine(Long routineId) {
         return routineRepository.findById(routineId)
-                .orElseThrow(() -> new IllegalArgumentException("루틴을 찾을 수 없습니다."));
+                .orElseThrow(() -> new RoutineNotFoundException("루틴을 찾을 수 없습니다."));
     }
 
     // 루틴 생성
     @Transactional
     public Routine createRoutine(Long userId, Routine routine) {
         User creator = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
         return routineRepository.save(routine);
     }
@@ -59,7 +63,7 @@ public class RoutineService {
     // 내가 참여 중인 루틴 조회
     public List<Routine> getMyRoutines(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
         return routineRepository.findParticipatingRoutines(user);
     }
@@ -68,14 +72,14 @@ public class RoutineService {
     @Transactional
     public RoutineParticipant joinRoutine(Long userId, Long routineId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
         Routine routine = routineRepository.findById(routineId)
-                .orElseThrow(() -> new IllegalArgumentException("루틴을 찾을 수 없습니다."));
+                .orElseThrow(() -> new RoutineNotFoundException("루틴을 찾을 수 없습니다."));
 
         // 정원 확인
         if (!routine.canJoin()) {
-            throw new IllegalStateException("정원이 마감되었습니다. (30/30명)");
+            throw new ForbiddenException("정원이 마감되었습니다. (30/30명)");
         }
 
         // 기존 참여 기록 조회
@@ -84,12 +88,12 @@ public class RoutineService {
 
         // 이미 활성 참여 중인지 확인
         if (existingParticipant.isPresent() && existingParticipant.get().isActive()) {
-            throw new IllegalStateException("이미 참여 중인 루틴입니다.");
+            throw new DuplicateException("이미 참여 중인 루틴입니다.");
         }
 
         // 재참여 가능 여부 확인 (강퇴 이력)
         if (existingParticipant.isPresent() && !existingParticipant.get().canRejoin()) {
-            throw new IllegalStateException(
+            throw new ForbiddenException(
                     "재참여 제한 기간입니다. " +
                             existingParticipant.get().getBanUntil() + "까지 참여 불가"
             );
@@ -101,7 +105,7 @@ public class RoutineService {
                 routine.getCategory(),
                 ParticipantStatus.ACTIVE
         )) {
-            throw new IllegalStateException(
+            throw new DuplicateException(
                     routine.getCategory() + " 카테고리 루틴은 이미 참여 중입니다. " +
                             "하나의 카테고리에는 1개의 루틴만 참여할 수 있습니다."
             );
@@ -124,13 +128,13 @@ public class RoutineService {
     @Transactional
     public void withdrawRoutine(Long userId, Long routineId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
         Routine routine = routineRepository.findById(routineId)
-                .orElseThrow(() -> new IllegalArgumentException("루틴을 찾을 수 없습니다."));
+                .orElseThrow(() -> new RoutineNotFoundException("루틴을 찾을 수 없습니다."));
 
         RoutineParticipant participant = participantRepository.findByUserAndRoutine(user, routine)
-                .orElseThrow(() -> new IllegalStateException("참여 중인 루틴이 아닙니다."));
+                .orElseThrow(() -> new ForbiddenException("참여 중인 루틴이 아닙니다."));
 
         // 탈퇴 처리
         participant.withdraw();

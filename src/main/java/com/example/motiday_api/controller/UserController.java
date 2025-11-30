@@ -1,9 +1,6 @@
 package com.example.motiday_api.controller;
 
-import com.example.motiday_api.domain.user.dto.LoginRequest;
-import com.example.motiday_api.domain.user.dto.LoginResponse;
-import com.example.motiday_api.domain.user.dto.UpdateProfileRequest;
-import com.example.motiday_api.domain.user.dto.UserResponse;
+import com.example.motiday_api.domain.user.dto.*;
 import com.example.motiday_api.domain.user.entity.User;
 import com.example.motiday_api.domain.user.service.UserService;
 import com.example.motiday_api.security.JwtTokenProvider;
@@ -73,5 +70,31 @@ public class UserController {
     public ResponseEntity<Boolean> checkNickname(@RequestParam String nickname) {
         boolean available = userService.isNicknameAvailable(nickname);
         return ResponseEntity.ok(available);
+    }
+
+    // Refresh Token으로 Access Token 재발급
+    @PostMapping("/auth/refresh")
+    public ResponseEntity<RefreshTokenResponse> refreshToken(@RequestBody RefreshTokenRequest request) {
+        // 1. Refresh Token 검증
+        if (!jwtTokenProvider.validateToken(request.getRefreshToken())) {
+            return ResponseEntity.status(401).build();
+        }
+
+        // 2. 사용자 조회
+        User user = userService.refreshAccessToken(request.getRefreshToken());
+
+        // 3. 새 Access Token 생성
+        String newAccessToken = jwtTokenProvider.generateAccessToken(user.getId());
+
+        // 4. 새 Refresh Token 생성 (선택: 갱신할지 말지)
+        String newRefreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
+        user.updateRefreshToken(newRefreshToken, LocalDateTime.now().plusWeeks(2));
+
+        RefreshTokenResponse response = RefreshTokenResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 }
