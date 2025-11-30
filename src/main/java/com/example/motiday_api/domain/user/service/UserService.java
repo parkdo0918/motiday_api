@@ -3,10 +3,13 @@ package com.example.motiday_api.domain.user.service;
 import com.example.motiday_api.domain.user.entity.SocialType;
 import com.example.motiday_api.domain.user.entity.User;
 import com.example.motiday_api.domain.user.repository.UserRepository;
+import com.example.motiday_api.exception.UnauthorizedException;
+import com.example.motiday_api.exception.UserNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Random;
 
 @Service
@@ -53,8 +56,24 @@ public class UserService {
 
     public User getUser(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
     }
+
+    // Refresh Token으로 Access Token 재발급
+    @Transactional
+    public User refreshAccessToken(String refreshToken) {
+        // 1. Refresh Token으로 사용자 조회
+        User user = userRepository.findByRefreshToken(refreshToken)
+                .orElseThrow(() -> new UnauthorizedException("유효하지 않은 Refresh Token입니다."));
+
+        // 2. Refresh Token 만료 확인
+        if (user.getRefreshTokenExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new UnauthorizedException("Refresh Token이 만료되었습니다. 다시 로그인해주세요.");
+        }
+
+        return user;
+    }
+
     // 닉네임 중복 체크
     public boolean isNicknameAvailable(String nickname) {
         return !userRepository.existsByNickname(nickname);
@@ -64,7 +83,7 @@ public class UserService {
     @Transactional
     public User updateProfile(Long userId, String nickname, String profileImageUrl , String bio) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
         user.updateProfile(nickname, profileImageUrl, bio);
         return user;
@@ -74,7 +93,7 @@ public class UserService {
     @Transactional
     public void addMoti(Long userId, int amount) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
         user.addMoti(amount);
     }
@@ -83,8 +102,10 @@ public class UserService {
     @Transactional
     public void deductMoti(Long userId, int amount) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
         user.deductMoti(amount);
     }
+
+
 }
