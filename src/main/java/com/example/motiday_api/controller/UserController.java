@@ -8,8 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -31,7 +29,7 @@ public class UserController {
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
 
         // Refresh Token DB 저장
-        user.updateRefreshToken(refreshToken, LocalDateTime.now().plusWeeks(2));
+        userService.updateRefreshToken(user.getId(), refreshToken);
 
         LoginResponse response = LoginResponse.builder()
                 .userId(user.getId())
@@ -88,7 +86,7 @@ public class UserController {
 
         // 4. 새 Refresh Token 생성 (선택: 갱신할지 말지)
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
-        user.updateRefreshToken(newRefreshToken, LocalDateTime.now().plusWeeks(2));
+        userService.updateRefreshToken(user.getId(), newRefreshToken);
 
         RefreshTokenResponse response = RefreshTokenResponse.builder()
                 .accessToken(newAccessToken)

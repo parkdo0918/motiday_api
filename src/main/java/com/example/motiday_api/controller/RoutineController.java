@@ -35,16 +35,20 @@ public class RoutineController {
             @RequestBody CreateRoutineRequest request
 
     ) {
-        Routine routine = Routine.builder()
-                .title(request.getTitle())
-                .description(request.getDescription())
-                .category(request.getCategory())
-                .difficulty(request.getDifficulty())
-                .startDate(request.getStartDate())
-                .region(request.getRegion())
-                .build();
+        if (userId == null) {
+            throw new IllegalArgumentException("인증이 필요합니다. JWT 토큰을 확인하세요.");
+        }
 
-        Routine created = routineService.createRoutine(userId, routine);
+        Routine created = routineService.createRoutine(
+                userId,
+                request.getTitle(),
+                request.getDescription(),
+                request.getCategory(),
+                request.getDifficulty(),
+                request.getStartDate(),
+                request.getRegion()
+        );
+
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(RoutineResponse.from(created));
     }
@@ -133,16 +137,23 @@ public class RoutineController {
                 .findByRoutineAndDate(routine, today)
                 .orElse(null);
 
+        // 통계 데이터가 없으면 기본값 반환
+        RoutineStatsResponse response;
         if (todayStats == null) {
-            return ResponseEntity.notFound().build();
+            response = RoutineStatsResponse.builder()
+                    .activeParticipants(routine.getCurrentParticipants())
+                    .last7DaysCertCount(0)
+                    .dailyCertificationCount(0)
+                    .yesterdayCertificationCount(0)
+                    .build();
+        } else {
+            response = RoutineStatsResponse.builder()
+                    .activeParticipants(todayStats.getActiveParticipants())
+                    .last7DaysCertCount(todayStats.getLast7DaysCertCount())
+                    .dailyCertificationCount(todayStats.getDailyCertificationCount())
+                    .yesterdayCertificationCount(todayStats.getYesterdayCertificationCount())
+                    .build();
         }
-
-        RoutineStatsResponse response = RoutineStatsResponse.builder()
-                .activeParticipants(todayStats.getActiveParticipants())
-                .last7DaysCertCount(todayStats.getLast7DaysCertCount())
-                .dailyCertificationCount(todayStats.getDailyCertificationCount())
-                .yesterdayCertificationCount(todayStats.getYesterdayCertificationCount())
-                .build();
 
         return ResponseEntity.ok(response);
     }

@@ -56,7 +56,8 @@ public class FeedController {
     public ResponseEntity<List<FeedResponse>> getHomeFeed(
             @AuthenticationPrincipal Long userId
     ) {
-        User user = userRepository.findById(userId).orElseThrow();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         List<Feed> feeds = feedService.getHomeFeed();
         List<FeedResponse> response = feeds.stream()

@@ -59,6 +59,15 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
     }
 
+    // Refresh Token DB 저장
+    @Transactional
+    public void updateRefreshToken(Long userId, String refreshToken) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
+
+        user.updateRefreshToken(refreshToken, LocalDateTime.now().plusWeeks(2));
+    }
+
     // Refresh Token으로 Access Token 재발급
     @Transactional
     public User refreshAccessToken(String refreshToken) {

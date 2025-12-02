@@ -3,6 +3,7 @@ package com.example.motiday_api.domain.routine.service;
 import com.example.motiday_api.domain.routine.entity.participant.ParticipantStatus;
 import com.example.motiday_api.domain.routine.entity.participant.RoutineParticipant;
 import com.example.motiday_api.domain.routine.entity.routine.Category;
+import com.example.motiday_api.domain.routine.entity.routine.Difficulty;
 import com.example.motiday_api.domain.routine.entity.routine.Routine;
 import com.example.motiday_api.domain.routine.entity.routine.RoutineStatus;
 import com.example.motiday_api.domain.routine.repository.RoutineParticipantRepository;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -38,11 +40,48 @@ public class RoutineService {
 
     // 루틴 생성
     @Transactional
-    public Routine createRoutine(Long userId, Routine routine) {
+    public Routine createRoutine(Long userId, String title, String description,
+                                  Category category, Difficulty difficulty,
+                                  LocalDate startDate, String region) {
         User creator = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
-        return routineRepository.save(routine);
+        // 같은 카테고리 루틴 참여 중인지 확인 (카테고리별 1개 제한)
+        if (participantRepository.existsByUserAndRoutine_CategoryAndStatus(
+                creator,
+                category,
+                ParticipantStatus.ACTIVE
+        )) {
+            throw new DuplicateException(
+                    category + " 카테고리 루틴은 이미 참여 중입니다. " +
+                            "하나의 카테고리에는 1개의 루틴만 참여할 수 있습니다."
+            );
+        }
+
+        Routine routine = Routine.builder()
+                .creator(creator)
+                .title(title)
+                .description(description)
+                .category(category)
+                .difficulty(difficulty)
+                .startDate(startDate)
+                .region(region)
+                .build();
+
+        Routine savedRoutine = routineRepository.save(routine);
+
+        // 생성자를 자동으로 참여자로 추가
+        RoutineParticipant participant = RoutineParticipant.builder()
+                .user(creator)
+                .routine(savedRoutine)
+                .joinedAt(LocalDateTime.now())
+                .build();
+        participantRepository.save(participant);
+
+        // 참여자 수 증가
+        savedRoutine.increaseParticipants();
+
+        return savedRoutine;
     }
 
     // 전체 활성 루틴 조회
