@@ -36,6 +36,9 @@ public class SecurityConfig {
 
                 // 요청별 권한 설정
                 .authorizeHttpRequests(auth -> auth
+                        // OPTIONS 요청(CORS preflight)은 모두 허용
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+
                         // Swagger UI 접근 허용
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
@@ -52,30 +55,31 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // CORS 설정
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // 허용할 출처 (프론트 주소)
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:3000",           // React 기본
-                "http://localhost:5173",           // Vite 기본
-                "http://localhost:5174",
-                "https://motiday.com",             // 배포 후 (예시)
-                "https://www.motiday.com"          // 배포 후 (예시)
-        ));
+        // 모든 origin 허용 (개발 환경용)
+        configuration.setAllowedOriginPatterns(List.of("*"));  // setAllowedOrigins 대신 사용
 
-        // 허용할 HTTP 메서드
+        // 배포 후 추가
+    /*
+    configuration.setAllowedOrigins(List.of(
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "http://localhost:5174",
+            "http://localhost:8080",
+            "https://nonerroneously-unaddible-deanne.ngrok-free.dev"
+    ));
+    */
+
         configuration.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
         ));
 
-        // 허용할 헤더
         configuration.setAllowedHeaders(List.of("*"));
-
-        // 인증 정보 포함 허용
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);  // preflight 캐싱 시간 추가
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
