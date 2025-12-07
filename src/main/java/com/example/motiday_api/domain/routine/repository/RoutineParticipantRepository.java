@@ -29,4 +29,7 @@ public interface RoutineParticipantRepository extends JpaRepository<RoutineParti
             Category category,
             ParticipantStatus status
     );
+
+    // 사용자별 참여 기록 삭제 (회원탈퇴 시)
+    void deleteByUser(User user);
 }

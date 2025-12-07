@@ -17,4 +17,7 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
     // 좋아요 존재 여부
     boolean existsByFeedAndUser(Feed feed, User user);
 
+    // 사용자별 좋아요 삭제 (회원탈퇴 시)
+    void deleteByUser(User user);
+
 }

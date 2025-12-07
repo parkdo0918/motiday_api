@@ -6,6 +6,7 @@ import com.example.motiday_api.domain.user.service.UserService;
 import com.example.motiday_api.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -93,5 +94,27 @@ public class UserController {
                 .build();
 
         return ResponseEntity.ok(response);
+    }
+
+    // 로그아웃
+    @PostMapping("/auth/logout")
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal Long userId) {
+        userService.logout(userId);
+        return ResponseEntity.ok().build();
+    }
+
+    // 회원탈퇴
+    @DeleteMapping("/users/{userId}")
+    public ResponseEntity<Void> deleteUser(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal Long currentUserId
+    ) {
+        // 본인만 탈퇴 가능
+        if (!userId.equals(currentUserId)) {
+            return ResponseEntity.status(403).build();
+        }
+
+        userService.deleteUser(userId);
+        return ResponseEntity.ok().build();
     }
 }

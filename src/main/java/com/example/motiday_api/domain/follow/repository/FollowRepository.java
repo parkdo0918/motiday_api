@@ -32,4 +32,7 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
 
     // 팔로잉 수
     int countByFollower(User follower);
+
+    // 사용자의 모든 팔로우 관계 삭제 (회원탈퇴 시)
+    void deleteByFollowerOrFollowing(User follower, User following);
 }

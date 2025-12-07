@@ -17,4 +17,7 @@ public interface WeeklyCertificationRepository extends JpaRepository<WeeklyCerti
             Routine routine,
             Integer weekNumber
     );
+
+    // 사용자별 인증 기록 삭제 (회원탈퇴 시)
+    void deleteByUser(User user);
 }

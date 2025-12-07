@@ -1,7 +1,12 @@
 package com.example.motiday_api.domain.user.service;
 
+import com.example.motiday_api.domain.feed.repository.ClapRepository;
+import com.example.motiday_api.domain.feed.repository.CommentRepository;
 import com.example.motiday_api.domain.feed.repository.FeedRepository;
+import com.example.motiday_api.domain.feed.repository.LikeRepository;
 import com.example.motiday_api.domain.follow.repository.FollowRepository;
+import com.example.motiday_api.domain.routine.repository.RoutineParticipantRepository;
+import com.example.motiday_api.domain.routine.repository.WeeklyCertificationRepository;
 import com.example.motiday_api.domain.user.dto.UserResponse;
 import com.example.motiday_api.domain.user.entity.SocialType;
 import com.example.motiday_api.domain.user.entity.User;
@@ -22,7 +27,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final FeedRepository feedRepository;
+    private final LikeRepository likeRepository;
+    private final ClapRepository clapRepository;
+    private final CommentRepository commentRepository;
     private final FollowRepository followRepository;
+    private final RoutineParticipantRepository participantRepository;
+    private final WeeklyCertificationRepository weeklyCertificationRepository;
 
     private String generateRandomNickname() {
         String[] names = {"열일하는모티", "꾸준한모티", "갓생사는모티", "집중하는모티"};
@@ -129,5 +139,42 @@ public class UserService {
         user.deductMoti(amount);
     }
 
+    // 로그아웃
+    @Transactional
+    public void logout(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
+
+        user.clearRefreshToken();
+    }
+
+    // 회원탈퇴
+    @Transactional
+    public void deleteUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
+
+        // 1. 주간 인증 기록 삭제
+        weeklyCertificationRepository.deleteByUser(user);
+
+        // 2. 루틴 참여 기록 삭제
+        participantRepository.deleteByUser(user);
+
+        // 3. 댓글 삭제
+        commentRepository.deleteByUser(user);
+
+        // 4. 좋아요, 박수 삭제
+        likeRepository.deleteByUser(user);
+        clapRepository.deleteByUser(user);
+
+        // 5. 피드 삭제
+        feedRepository.deleteByUser(user);
+
+        // 6. 팔로우 관계 삭제
+        followRepository.deleteByFollowerOrFollowing(user, user);
+
+        // 7. 마지막으로 User 삭제
+        userRepository.delete(user);
+    }
 
 }

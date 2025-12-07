@@ -26,4 +26,7 @@ public interface FeedRepository extends JpaRepository<Feed, Long> {
 
     // 사용자별 피드 개수
     int countByUser(User user);
+
+    // 사용자별 피드 삭제 (회원탈퇴 시)
+    void deleteByUser(User user);
 }

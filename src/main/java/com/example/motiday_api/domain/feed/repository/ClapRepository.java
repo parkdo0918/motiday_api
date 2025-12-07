@@ -17,4 +17,7 @@ public interface ClapRepository extends JpaRepository<Clap, Long> {
     // 박수 존재 여부
     boolean existsByFeedAndUser(Feed feed, User user);
 
+    // 사용자별 박수 삭제 (회원탈퇴 시)
+    void deleteByUser(User user);
+
 }

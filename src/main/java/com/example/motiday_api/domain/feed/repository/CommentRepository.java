@@ -17,4 +17,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     // 피드별 댓글 수
     int countByFeed(Feed feed);
+
+    // 사용자별 댓글 삭제 (회원탈퇴 시)
+    void deleteByUser(com.example.motiday_api.domain.user.entity.User user);
 }
