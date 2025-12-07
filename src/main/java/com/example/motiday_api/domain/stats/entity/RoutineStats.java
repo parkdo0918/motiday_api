@@ -56,6 +56,10 @@ public class RoutineStats {
     @Builder.Default
     private Integer last14DaysCertCount = 0;  // 최근 14일 인증 수 (방 폭파 조건용)
 
+    @Column(name = "consecutive_days_below_3", nullable = false)
+    @Builder.Default
+    private Integer consecutiveDaysBelow3 = 0;  // 연속으로 활성 참여자 3명 미만이었던 일수
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;  // 수정 일시
 
@@ -82,17 +86,26 @@ public class RoutineStats {
         this.last7DaysCertCount = last7Days;
         this.last14DaysCertCount = last14Days;
         this.activeParticipants = activeCount;
-        this.yesterdayCertificationCount = yesterdayCount;  // 추가
+        this.yesterdayCertificationCount = yesterdayCount;
+
+        // 연속 일수 업데이트: 3명 미만이면 증가, 아니면 리셋
+        if (activeCount < 3) {
+            this.consecutiveDaysBelow3++;
+        } else {
+            this.consecutiveDaysBelow3 = 0;
+        }
+
         this.updatedAt = LocalDateTime.now();
     }
 
     /**
      * 방 폭파 조건 확인
-     * 활성 참여자 3명 이하 && 최근 14일 인증 0건
+     * 1) 연속 14일 동안 활성 참여자 3명 미만 AND
+     * 2) 최근 14일 인증 0건
      * @return 방 폭파 조건 충족 시 true
      */
     public boolean shouldCloseRoutine() {
-        return this.activeParticipants <= 3 && this.last14DaysCertCount == 0;
+        return this.consecutiveDaysBelow3 >= 14 && this.last14DaysCertCount == 0;
     }
 
     /**
