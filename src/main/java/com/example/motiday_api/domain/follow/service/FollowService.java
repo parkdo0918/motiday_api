@@ -40,6 +40,11 @@ public class FollowService {
             throw new DuplicateException("이미 팔로우 중입니다.");
         }
 
+        // 팔로우 신청 허용 여부 확인
+        if (!following.getAllowFollowRequest()) {
+            throw new ForbiddenException("이 사용자는 팔로우 신청을 받지 않습니다.");
+        }
+
         Follow follow = Follow.builder()
                 .follower(follower)
                 .following(following)

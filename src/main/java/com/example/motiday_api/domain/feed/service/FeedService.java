@@ -167,6 +167,11 @@ public class FeedService {
             throw new DuplicateException("이미 좋아요한 피드입니다.");
         }
 
+        // 피드 작성자의 좋아요 허용 설정 확인
+        if (!feed.getUser().getAllowFeedLike()) {
+            throw new ForbiddenException("이 사용자는 게시글 좋아요를 받지 않습니다.");
+        }
+
         // 좋아요 생성
         Like like = Like.builder()
                 .feed(feed)
@@ -251,6 +256,11 @@ public class FeedService {
 
         Feed feed = feedRepository.findById(feedId)
                 .orElseThrow(() -> new IllegalArgumentException("피드를 찾을 수 없습니다."));
+
+        // 피드 작성자의 댓글 허용 설정 확인
+        if (!feed.getUser().getAllowFeedComment()) {
+            throw new ForbiddenException("이 사용자는 게시글 댓글을 받지 않습니다.");
+        }
 
         // 댓글 생성
         Comment comment = Comment.builder()

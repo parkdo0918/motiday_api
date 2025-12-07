@@ -8,6 +8,8 @@ import com.example.motiday_api.domain.follow.repository.FollowRepository;
 import com.example.motiday_api.domain.routine.repository.RoutineParticipantRepository;
 import com.example.motiday_api.domain.routine.repository.WeeklyCertificationRepository;
 import com.example.motiday_api.domain.user.dto.UserResponse;
+import com.example.motiday_api.domain.user.dto.UserSettingsRequest;
+import com.example.motiday_api.domain.user.dto.UserSettingsResponse;
 import com.example.motiday_api.domain.user.entity.SocialType;
 import com.example.motiday_api.domain.user.entity.User;
 import com.example.motiday_api.domain.user.repository.UserRepository;
@@ -146,6 +148,29 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
         user.clearRefreshToken();
+    }
+
+    // 환경설정 조회
+    public UserSettingsResponse getUserSettings(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
+
+        return UserSettingsResponse.from(user);
+    }
+
+    // 환경설정 변경
+    @Transactional
+    public UserSettingsResponse updateSettings(Long userId, UserSettingsRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
+
+        user.updateSettings(
+                request.getAllowFollowRequest(),
+                request.getAllowFeedLike(),
+                request.getAllowFeedComment()
+        );
+
+        return UserSettingsResponse.from(user);
     }
 
     // 회원탈퇴

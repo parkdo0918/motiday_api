@@ -43,6 +43,19 @@ public class User extends BaseTimeEntity {
     @Builder.Default
     private Integer motiBalance = 0;
 
+    // 환경설정 필드
+    @Column(name = "allow_follow_request", nullable = false)
+    @Builder.Default
+    private Boolean allowFollowRequest = true;  // 팔로우 신청 허용
+
+    @Column(name = "allow_feed_like", nullable = false)
+    @Builder.Default
+    private Boolean allowFeedLike = true;  // 게시글 좋아요 허용
+
+    @Column(name = "allow_feed_comment", nullable = false)
+    @Builder.Default
+    private Boolean allowFeedComment = true;  // 게시글 댓글 허용
+
     // Refresh Token 관련 필드 추가
     @Column(length = 500)
     private String refreshToken;
@@ -92,5 +105,18 @@ public class User extends BaseTimeEntity {
             return false;
         }
         return LocalDateTime.now().isBefore(this.refreshTokenExpiresAt);
+    }
+
+    // 환경설정 변경
+    public void updateSettings(Boolean allowFollowRequest, Boolean allowFeedLike, Boolean allowFeedComment) {
+        if (allowFollowRequest != null) {
+            this.allowFollowRequest = allowFollowRequest;
+        }
+        if (allowFeedLike != null) {
+            this.allowFeedLike = allowFeedLike;
+        }
+        if (allowFeedComment != null) {
+            this.allowFeedComment = allowFeedComment;
+        }
     }
 }

@@ -103,6 +103,27 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    // 환경설정 조회
+    @GetMapping("/users/{userId}/settings")
+    public ResponseEntity<UserSettingsResponse> getUserSettings(@PathVariable Long userId) {
+        return ResponseEntity.ok(userService.getUserSettings(userId));
+    }
+
+    // 환경설정 변경
+    @PutMapping("/users/{userId}/settings")
+    public ResponseEntity<UserSettingsResponse> updateSettings(
+            @PathVariable Long userId,
+            @RequestBody UserSettingsRequest request,
+            @AuthenticationPrincipal Long currentUserId
+    ) {
+        // 본인만 변경 가능
+        if (!userId.equals(currentUserId)) {
+            return ResponseEntity.status(403).build();
+        }
+
+        return ResponseEntity.ok(userService.updateSettings(userId, request));
+    }
+
     // 회원탈퇴
     @DeleteMapping("/users/{userId}")
     public ResponseEntity<Void> deleteUser(
