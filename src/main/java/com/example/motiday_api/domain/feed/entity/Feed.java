@@ -46,6 +46,10 @@ public class Feed extends BaseTimeEntity {
     @Builder.Default
     private Integer likeCount = 0;  // 좋아요 수
 
+    @Column(name = "clap_count", nullable = false)
+    @Builder.Default
+    private Integer clapCount = 0;  // 박수 수
+
     @Column(name = "comment_count", nullable = false)
     @Builder.Default
     private Integer commentCount = 0;  // 댓글 수
@@ -67,6 +71,24 @@ public class Feed extends BaseTimeEntity {
     public void decreaseLikeCount() {
         if (this.likeCount > 0) {
             this.likeCount--;
+        }
+    }
+
+    /**
+     * 박수 수 증가
+     * Clap 엔티티 생성 시 호출
+     */
+    public void increaseClapCount() {
+        this.clapCount++;
+    }
+
+    /**
+     * 박수 수 감소
+     * Clap 엔티티 삭제 시 호출 (박수 취소)
+     */
+    public void decreaseClapCount() {
+        if (this.clapCount > 0) {
+            this.clapCount--;
         }
     }
 

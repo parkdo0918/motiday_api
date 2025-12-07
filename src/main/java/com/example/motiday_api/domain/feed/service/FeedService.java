@@ -1,13 +1,16 @@
 package com.example.motiday_api.domain.feed.service;
 
+import com.example.motiday_api.domain.feed.entity.Clap;
 import com.example.motiday_api.domain.feed.entity.Comment;
 import com.example.motiday_api.domain.feed.entity.Feed;
 import com.example.motiday_api.domain.feed.entity.Like;
+import com.example.motiday_api.domain.feed.repository.ClapRepository;
 import com.example.motiday_api.domain.feed.repository.CommentRepository;
 import com.example.motiday_api.domain.feed.repository.FeedRepository;
 import com.example.motiday_api.domain.feed.repository.LikeRepository;
 import com.example.motiday_api.domain.routine.entity.certification.WeeklyCertification;
 import com.example.motiday_api.domain.routine.entity.participant.RoutineParticipant;
+import com.example.motiday_api.domain.routine.entity.routine.Category;
 import com.example.motiday_api.domain.routine.entity.routine.Routine;
 import com.example.motiday_api.domain.routine.repository.RoutineParticipantRepository;
 import com.example.motiday_api.domain.routine.repository.RoutineRepository;
@@ -40,6 +43,7 @@ public class FeedService {
     private final WeeklyCertificationRepository weeklyCertRepository;
     private final RoutineStatsRepository routineStatsRepository;
     private final LikeRepository likeRepository;
+    private final ClapRepository clapRepository;
     private final CommentRepository commentRepository;
 
     // 사용자별 피드 조회 (프로필용)
@@ -128,8 +132,17 @@ public class FeedService {
     }
 
     // 홈 피드 조회
-    public List<Feed> getHomeFeed() {
-        return feedRepository.findAllByOrderByCreatedAtDesc();
+    public List<Feed> getHomeFeed(Category category) {
+        List<Feed> feeds = feedRepository.findAllByOrderByCreatedAtDesc();
+
+        // 카테고리 필터링 (category가 null이면 전체 반환)
+        if (category != null) {
+            return feeds.stream()
+                    .filter(feed -> feed.getRoutine().getCategory() == category)
+                    .collect(java.util.stream.Collectors.toList());
+        }
+
+        return feeds;
     }
 
     // 활동 게시물 조회 (루틴별)
@@ -183,6 +196,51 @@ public class FeedService {
 
         // 좋아요 수 감소
         feed.decreaseLikeCount();
+    }
+
+    // 박수
+    @Transactional
+    public void clapFeed(Long userId, Long feedId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
+
+        Feed feed = feedRepository.findById(feedId)
+                .orElseThrow(() -> new IllegalArgumentException("피드를 찾을 수 없습니다."));
+
+        // 이미 박수했는지 확인
+        if (clapRepository.existsByFeedAndUser(feed, user)) {
+            throw new DuplicateException("이미 박수한 피드입니다.");
+        }
+
+        // 박수 생성
+        Clap clap = Clap.builder()
+                .feed(feed)
+                .user(user)
+                .build();
+        clapRepository.save(clap);
+
+        // 박수 수 증가
+        feed.increaseClapCount();
+    }
+
+    // 박수 취소
+    @Transactional
+    public void unclapFeed(Long userId, Long feedId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
+
+        Feed feed = feedRepository.findById(feedId)
+                .orElseThrow(() -> new IllegalArgumentException("피드를 찾을 수 없습니다."));
+
+        // 박수 찾기
+        Clap clap = clapRepository.findByFeedAndUser(feed, user)
+                .orElseThrow(() -> new ForbiddenException("박수하지 않은 피드입니다."));
+
+        // 박수 삭제
+        clapRepository.delete(clap);
+
+        // 박수 수 감소
+        feed.decreaseClapCount();
     }
 
     // 댓글 작성

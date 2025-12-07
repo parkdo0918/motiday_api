@@ -44,8 +44,7 @@ public class UserController {
     // 프로필 조회
     @GetMapping("/users/{userId}")
     public ResponseEntity<UserResponse> getUser(@PathVariable Long userId) {
-        User user = userService.getUser(userId);
-        return ResponseEntity.ok(UserResponse.from(user));
+        return ResponseEntity.ok(userService.getUserProfile(userId));
     }
 
     // 프로필 수정

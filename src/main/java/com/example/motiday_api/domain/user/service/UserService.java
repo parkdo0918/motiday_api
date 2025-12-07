@@ -1,5 +1,8 @@
 package com.example.motiday_api.domain.user.service;
 
+import com.example.motiday_api.domain.feed.repository.FeedRepository;
+import com.example.motiday_api.domain.follow.repository.FollowRepository;
+import com.example.motiday_api.domain.user.dto.UserResponse;
 import com.example.motiday_api.domain.user.entity.SocialType;
 import com.example.motiday_api.domain.user.entity.User;
 import com.example.motiday_api.domain.user.repository.UserRepository;
@@ -18,6 +21,8 @@ import java.util.Random;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final FeedRepository feedRepository;
+    private final FollowRepository followRepository;
 
     private String generateRandomNickname() {
         String[] names = {"열일하는모티", "꾸준한모티", "갓생사는모티", "집중하는모티"};
@@ -57,6 +62,14 @@ public class UserService {
     public User getUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
+    }
+
+    // 프로필 조회 (feedCount, followerCount 포함)
+    public UserResponse getUserProfile(Long userId) {
+        User user = getUser(userId);
+        int feedCount = feedRepository.countByUser(user);
+        int followerCount = followRepository.countByFollowing(user);
+        return UserResponse.from(user, feedCount, followerCount);
     }
 
     // Refresh Token DB 저장

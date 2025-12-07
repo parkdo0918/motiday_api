@@ -23,4 +23,7 @@ public interface FeedRepository extends JpaRepository<Feed, Long> {
     // 사용자별 피드 (프로필)
     @Query("SELECT f FROM Feed f JOIN FETCH f.user JOIN FETCH f.routine WHERE f.user = :user ORDER BY f.createdAt DESC")
     List<Feed> findByUserOrderByCreatedAtDesc(User user);
+
+    // 사용자별 피드 개수
+    int countByUser(User user);
 }

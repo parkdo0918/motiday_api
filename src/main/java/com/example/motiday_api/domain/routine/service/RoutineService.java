@@ -100,11 +100,20 @@ public class RoutineService {
     }
 
     // 내가 참여 중인 루틴 조회
-    public List<Routine> getMyRoutines(Long userId) {
+    public List<Routine> getMyRoutines(Long userId, Category category) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
-        return routineRepository.findParticipatingRoutines(user);
+        List<Routine> routines = routineRepository.findParticipatingRoutines(user);
+
+        // 카테고리 필터링 (category가 null이면 전체 반환)
+        if (category != null) {
+            return routines.stream()
+                    .filter(r -> r.getCategory() == category)
+                    .collect(java.util.stream.Collectors.toList());
+        }
+
+        return routines;
     }
 
     // 루틴 참여

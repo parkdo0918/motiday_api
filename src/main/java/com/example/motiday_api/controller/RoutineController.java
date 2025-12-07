@@ -98,8 +98,11 @@ public class RoutineController {
 
     // 내가 참여 중인 루틴
     @GetMapping("/users/{userId}/routines")
-    public ResponseEntity<List<RoutineResponse>> getMyRoutines(@PathVariable Long userId) {
-        List<Routine> routines = routineService.getMyRoutines(userId);
+    public ResponseEntity<List<RoutineResponse>> getMyRoutines(
+            @PathVariable Long userId,
+            @RequestParam(required = false) Category category
+    ) {
+        List<Routine> routines = routineService.getMyRoutines(userId, category);
         List<RoutineResponse> response = routines.stream()
                 .map(RoutineResponse::from)
                 .collect(Collectors.toList());

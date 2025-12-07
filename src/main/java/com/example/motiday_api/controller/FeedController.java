@@ -6,9 +6,11 @@ import com.example.motiday_api.domain.feed.dto.CreateFeedRequest;
 import com.example.motiday_api.domain.feed.dto.FeedResponse;
 import com.example.motiday_api.domain.feed.entity.Comment;
 import com.example.motiday_api.domain.feed.entity.Feed;
+import com.example.motiday_api.domain.feed.repository.ClapRepository;
 import com.example.motiday_api.domain.feed.repository.CommentRepository;
 import com.example.motiday_api.domain.feed.repository.LikeRepository;
 import com.example.motiday_api.domain.feed.service.FeedService;
+import com.example.motiday_api.domain.routine.entity.routine.Category;
 import com.example.motiday_api.domain.user.entity.User;
 import com.example.motiday_api.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ public class FeedController {
     private final FeedService feedService;
     private final UserRepository userRepository;
     private final LikeRepository likeRepository;
+    private final ClapRepository clapRepository;
     private final CommentRepository commentRepository;
 
     // 피드 생성 (인증 업로드)
@@ -48,22 +51,23 @@ public class FeedController {
 
         boolean isLiked = likeRepository.existsByFeedAndUser(feed, user);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(FeedResponse.from(feed, isLiked));
+                .body(FeedResponse.from(feed, isLiked, false));
     }
 
     // 홈 피드 조회
     @GetMapping("/feeds")
     public ResponseEntity<List<FeedResponse>> getHomeFeed(
-            @AuthenticationPrincipal Long userId
+            @AuthenticationPrincipal Long userId,
+            @RequestParam(required = false) Category category
     ) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        List<Feed> feeds = feedService.getHomeFeed();
+        List<Feed> feeds = feedService.getHomeFeed(category);
         List<FeedResponse> response = feeds.stream()
                 .map(feed -> {
                     boolean isLiked = likeRepository.existsByFeedAndUser(feed, user);
-                    return FeedResponse.from(feed, isLiked);
+                    return FeedResponse.from(feed, isLiked, false);
                 })
                 .collect(Collectors.toList());
 
@@ -82,7 +86,8 @@ public class FeedController {
         List<FeedResponse> response = feeds.stream()
                 .map(feed -> {
                     boolean isLiked = likeRepository.existsByFeedAndUser(feed, user);
-                    return FeedResponse.from(feed, isLiked);
+                    boolean isClapped = clapRepository.existsByFeedAndUser(feed, user);
+                    return FeedResponse.from(feed, isLiked, isClapped);
                 })
                 .collect(Collectors.toList());
 
@@ -101,7 +106,7 @@ public class FeedController {
         List<FeedResponse> response = feeds.stream()
                 .map(feed -> {
                     boolean isLiked = likeRepository.existsByFeedAndUser(feed, currentUser);
-                    return FeedResponse.from(feed, isLiked);
+                    return FeedResponse.from(feed, isLiked, false);
                 })
                 .collect(Collectors.toList());
 
@@ -132,6 +137,32 @@ public class FeedController {
         // 업데이트된 좋아요 수 반환
         Feed feed = feedService.getFeed(feedId);
         return ResponseEntity.ok(feed.getLikeCount());
+    }
+
+    // 박수
+    @PostMapping("/feeds/{feedId}/clap")
+    public ResponseEntity<Integer> clapFeed(
+            @PathVariable Long feedId,
+            @AuthenticationPrincipal Long userId
+    ) {
+        feedService.clapFeed(userId, feedId);
+
+        // 업데이트된 박수 수 반환
+        Feed feed = feedService.getFeed(feedId);
+        return ResponseEntity.ok(feed.getClapCount());
+    }
+
+    // 박수 취소
+    @DeleteMapping("/feeds/{feedId}/clap")
+    public ResponseEntity<Integer> unclapFeed(
+            @PathVariable Long feedId,
+            @AuthenticationPrincipal Long userId
+    ) {
+        feedService.unclapFeed(userId, feedId);
+
+        // 업데이트된 박수 수 반환
+        Feed feed = feedService.getFeed(feedId);
+        return ResponseEntity.ok(feed.getClapCount());
     }
 
     // 댓글 작성

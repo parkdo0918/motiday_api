@@ -1,0 +1,20 @@
+package com.example.motiday_api.domain.feed.repository;
+
+import com.example.motiday_api.domain.feed.entity.Clap;
+import com.example.motiday_api.domain.feed.entity.Feed;
+import com.example.motiday_api.domain.user.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface ClapRepository extends JpaRepository<Clap, Long> {
+
+    // 박수 여부 확인
+    Optional<Clap> findByFeedAndUser(Feed feed, User user);
+
+    // 박수 존재 여부
+    boolean existsByFeedAndUser(Feed feed, User user);
+
+}
